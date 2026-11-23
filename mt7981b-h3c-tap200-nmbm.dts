@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+/dts-v1/;
+#include "mt7981b-h3c-tap200.dts"
+
+/ {
+	model = "H3C TAP200 (NMBM layout)";
+	compatible = "h3c,tap200-nmbm", "mediatek,mt7981";
+};
+
+&chosen {
+	/delete-property/ bootargs-append;
+	/delete-property/ rootdisk;
+};
+
+/*
+ * TAP200 原厂使用 NMBM（NAND Memory Block Management）坏块管理。
+ * 这是关键配置：不加 NMBM 参数，内核无法正确识别 SPI-NAND 分区，
+ * 也就看不到 Factory 分区。
+ */
+&spi_nand {
+	mediatek,nmbm;
+	mediatek,bmt-max-ratio = <1>;
+	mediatek,bmt-max-reserved-blocks = <64>;
+
+	spi-cal-enable;
+	spi-cal-mode = "read-data";
+	spi-cal-datalen = <7>;
+	spi-cal-data = /bits/ 8 <0x53 0x50 0x49 0x4E 0x41 0x4E 0x44>;
+	spi-cal-addrlen = <5>;
+	spi-cal-addr = /bits/ 32 <0x0 0x0 0x0 0x0 0x0>;
+};
+
+&spi0_flash_pins {
+	conf-pu {
+		/delete-property/ mediatek,pull-up-adv;
+		bias-pull-up = <MTK_PUPD_SET_R1R0_11>;
+	};
+
+	conf-pd {
+		/delete-property/ mediatek,pull-up-adv;
+		bias-pull-down = <MTK_PUPD_SET_R1R0_11>;
+	};
+};
+
+/* 临时 initramfs 不需要 ubi 的 FIT volume */
+&ubi {
+	/delete-node/ volumes;
+};
