@@ -80,4 +80,22 @@ fi
 echo "=== 设置默认 IP ==="
 sed -i 's/192\.168\.13\.1/192.168.1.1/g' "$OPENWRT_PATH/package/base-files/files/bin/config_generate" 2>/dev/null || true
 
+echo "=== 配置后网口为 LAN (uci-defaults) ==="
+mkdir -p "$OPENWRT_PATH/files/etc/uci-defaults"
+cat > "$OPENWRT_PATH/files/etc/uci-defaults/99-tap200-lan" << 'EOF'
+#!/bin/sh
+# TAP200: 后网口(gmac1/eth0) 设为 LAN，启用 DHCP 服务器
+uci set network.lan=interface
+uci set network.lan.proto='static'
+uci set network.lan.ipaddr='192.168.1.1'
+uci set network.lan.netmask='255.255.255.0'
+uci set network.lan.device='eth0'
+uci set dhcp.lan.ignore='0'
+uci commit network
+uci commit dhcp
+exit 0
+EOF
+chmod +x "$OPENWRT_PATH/files/etc/uci-defaults/99-tap200-lan"
+echo "  已添加 LAN 网络配置"
+
 echo "=== DIY 脚本完成 ==="
